@@ -19,3 +19,70 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+==============================================================================
+                      第三方组件与许可声明
+                     THIRD-PARTY NOTICES
+==============================================================================
+
+上述 MIT 许可证仅适用于 DesktopAide 自身的代码。DesktopAide 捆绑分发了下列
+第三方组件，各组件分别适用其各自的许可证。分发本项目的安装包或免安装版时，
+请连同本文件一起提供。
+
+------------------------------------------------------------------------------
+一、随分发包捆绑的组件
+------------------------------------------------------------------------------
+
+RapidOCR-json —— 本地 OCR 推理可执行文件
+    位置      resources/RapidOCR-json/RapidOCR-json.exe
+    许可证    MIT
+    版权      Copyright (c) 2023 hiroi-sora
+    上游      https://github.com/hiroi-sora/RapidOCR-json
+    （适用本文件开头的 MIT 许可证全文）
+
+PP-OCR 系列 ONNX 模型 —— 文字检测与识别模型及词表
+    位置      resources/RapidOCR-json/models/*.onnx、dict_*.txt
+    许可证    Apache-2.0（PaddleOCR 项目，具体以模型页声明为准）
+    上游      https://github.com/PaddlePaddle/PaddleOCR
+    许可证全文 https://www.apache.org/licenses/LICENSE-2.0
+
+WebView2 Runtime —— 界面渲染引擎
+    位置      Windows 11 预装；Windows 10 由安装器引导安装
+    许可证    Microsoft 专有许可（允许随应用分发）
+    上游      https://developer.microsoft.com/microsoft-edge/webview2/
+
+NSIS —— 生成 Windows 安装包所用工具链
+    许可证    zlib/libpng
+    上游      https://nsis.sourceforge.io/
+
+RapidOCR-json 的传递依赖（静态编译于该可执行文件内）：
+
+    RapidOcrOnnx（推理引擎）   Apache-2.0   https://github.com/RapidAI/RapidOcrOnnx
+    nlohmann/json（JSON 库）   MIT          https://github.com/nlohmann/json
+
+------------------------------------------------------------------------------
+二、构建与运行时依赖
+------------------------------------------------------------------------------
+
+前端（npm）
+
+    MIT:
+        react, react-dom, zustand, framer-motion, katex, sonner,
+        react-markdown, remark-gfm, remark-math, rehype-katex
+    MIT 或 Apache-2.0:
+        @tauri-apps/api, @tauri-apps/plugin-dialog
+    开发依赖（MIT / Apache-2.0 等）:
+        vite, typescript, tailwindcss, vitest, eslint
+
+后端（crates.io）
+
+    MIT:
+        tokio, futures, eventsource-stream
+        llm_models_spider   MIT (Copyright (c) 2024 Spider Cloud)
+    MIT 或 Apache-2.0:
+        tauri, tauri-plugin-*, reqwest, serde, serde_json,
+        chrono, base64, dirs, once_cell, log, windows
+    Apache-2.0 或 MIT:
+        uuid
+    MIT（SQLite 本身为 Public Domain）:
+        rusqlite（bundled SQLite）
