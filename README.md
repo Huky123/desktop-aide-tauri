@@ -206,8 +206,4 @@ npm run dev
 
 ## 许可证
 
-本项目以 **MIT 许可证**发布，版权归 **DesktopAide contributors** 所有 —— 见 [LICENSE](LICENSE)。
-
-简言之：你可以自由使用、修改、分发（含商业用途与闭源分发），只需**保留版权声明与许可证文本**；软件按「原样」提供，作者不承担担保与责任。
-
-> **第三方组件**：本项目的安装包/免安装版**捆绑分发**了 RapidOCR-json 与 PP-OCR ONNX 模型（本地 OCR），并依赖大量开源库。`LICENSE` 与 `THIRD-PARTY-NOTICES.md`（列出各组件的许可证与来源）会一并放入安装目录。
+本项目以 **MIT 许可证**发布。
