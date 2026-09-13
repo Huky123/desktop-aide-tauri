@@ -1,0 +1,71 @@
+{
+  "name": "desktop-aide",
+  "private": true,
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Windows 桌面 AI 助手：浮动气泡常驻，多模型对话 / 联网搜索 / 定时提醒 / 截图识图 / 图片生成，数据本地存储",
+  "author": "DesktopAide contributors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Huky123/desktop-aide-tauri.git"
+  },
+  "homepage": "https://github.com/Huky123/desktop-aide-tauri#readme",
+  "bugs": {
+    "url": "https://github.com/Huky123/desktop-aide-tauri/issues"
+  },
+  "keywords": [
+    "tauri",
+    "desktop",
+    "ai-assistant",
+    "llm",
+    "windows",
+    "local-first"
+  ],
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.11.0",
+    "@tauri-apps/plugin-dialog": "^2.7.2",
+    "framer-motion": "^12.40.0",
+    "katex": "^0.17.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-markdown": "^10.1.0",
+    "rehype-katex": "^7.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
+    "sonner": "^2.0.7",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@tailwindcss/vite": "^4.3.0",
+    "@tauri-apps/cli": "^2.11.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^24.12.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "@vitest/coverage-v8": "^4.1.9",
+    "eslint": "^10.3.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.6.0",
+    "happy-dom": "^20.10.5",
+    "tailwindcss": "^4.3.0",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.59.2",
+    "vite": "^8.0.12",
+    "vitest": "^4.1.9"
+  }
+}

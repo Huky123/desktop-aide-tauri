@@ -1,0 +1,15 @@
+* text=auto eol=lf
+
+# 二进制文件不做行尾/编码转换
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.ico  binary
+*.icns binary
+*.exe  binary
+*.dll  binary
+*.onnx binary
+*.pdf  binary
+*.woff binary
+*.woff2 binary
+*.ttf  binary
