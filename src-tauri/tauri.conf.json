@@ -25,7 +25,8 @@
         "skipTaskbar": true,
         "shadow": false,
         "visible": false,
-        "center": true
+        "center": true,
+        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection,CalculateNativeWinOcclusion"
       }
     ],
     "security": {
