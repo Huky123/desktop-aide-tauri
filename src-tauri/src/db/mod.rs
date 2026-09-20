@@ -234,11 +234,22 @@ pub struct ImageRef {
 /// 消息搜索结果条目
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct SearchResult {
+    /// 匹配消息 ID（供前端跳转后定位到该条）
+    pub message_id: String,
     pub conversation_id: String,
     pub title: String,
     /// 匹配消息的预览（关键词附近上下文）
     pub preview: String,
     pub timestamp: i64,
+}
+
+/// 转义 LIKE 模式中的通配符（% _ \），配合 `ESCAPE '\'` 使用。
+/// 否则用户搜索 "50%" 或 "_" 会被当作通配符，导致结果错误。
+fn escape_like(input: &str) -> String {
+    input
+        .replace('\\', "\\\\")
+        .replace('%', "\\%")
+        .replace('_', "\\_")
 }
 
 /// 定时提醒条目
@@ -826,25 +837,27 @@ impl Database {
     /// 按关键词搜索消息（LIKE 匹配 content，含所属会话标题），按时间倒序返回最多 50 条
     pub fn search_messages(&self, query: &str) -> Result<Vec<SearchResult>, String> {
         let conn = self.conn.lock().map_err(|e| format!("数据库锁失败: {e}"))?;
-        let pattern = format!("%{}%", query);
+        // 转义通配符，避免用户输入的 % _ 被当作 LIKE 模式通配符
+        let pattern = format!("%{}%", escape_like(query));
         let mut stmt = conn
             .prepare(
-                "SELECT m.conversation_id, c.title, m.content, m.timestamp
+                "SELECT m.id, m.conversation_id, c.title, m.content, m.timestamp
                  FROM messages m
                  INNER JOIN conversations c ON c.id = m.conversation_id
-                 WHERE m.content LIKE ?1
+                 WHERE m.content LIKE ?1 ESCAPE '\\'
                  ORDER BY m.timestamp DESC
                  LIMIT 50",
             )
             .map_err(|e| format!("准备查询失败: {e}"))?;
         let rows = stmt
             .query_map(params![pattern], |row| {
-                let content: String = row.get(2)?;
+                let content: String = row.get(3)?;
                 Ok(SearchResult {
-                    conversation_id: row.get(0)?,
-                    title: row.get(1)?,
+                    message_id: row.get(0)?,
+                    conversation_id: row.get(1)?,
+                    title: row.get(2)?,
                     preview: preview_around(&content, query, 80),
-                    timestamp: row.get(3)?,
+                    timestamp: row.get(4)?,
                 })
             })
             .map_err(|e| format!("查询消息失败: {e}"))?;

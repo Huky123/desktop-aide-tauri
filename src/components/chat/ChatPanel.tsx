@@ -58,6 +58,16 @@ export function ChatPanel() {
   // ── 侧边栏状态 ──
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // 搜索结果跳转后需要定位高亮的消息 ID（2 秒后自动清除）
+  const [highlightMessageId, setHighlightMessageId] = useState<string | null>(null);
+
+  // 高亮 2.5 秒后自动清除
+  useEffect(() => {
+    if (!highlightMessageId) return;
+    const timer = setTimeout(() => setHighlightMessageId(null), 2500);
+    return () => clearTimeout(timer);
+  }, [highlightMessageId]);
+
   // ── hooks ──
   const { thinkingPhrase, completionPhrase, setCompletionPhrase, COMPLETION_PHRASES } =
     useThinkingAnimation(isAiResponding, hasStreamingText);
@@ -176,6 +186,23 @@ export function ChatPanel() {
     setSidebarOpen(false);
   };
 
+  /** 点击搜索结果：切换会话并定位高亮到匹配的消息 */
+  const handleSelectSearchResult = async (convId: string, messageId: string) => {
+    if (isAiResponding) {
+      toast.error("请等待当前回复完成后再切换对话");
+      return;
+    }
+    if (pendingAttachments.length > 0) {
+      toast.error("请先发送或移除待发送附件");
+      return;
+    }
+    if (convId !== currentConversationId) {
+      await switchToConversation(convId);
+    }
+    setSidebarOpen(false);
+    setHighlightMessageId(messageId);
+  };
+
   const handleDeleteConversation = async (id: string) => {
     if (isAiResponding) {
       toast.error("请等待当前回复完成后再删除对话");
@@ -284,6 +311,7 @@ export function ChatPanel() {
                 onHintClick={handleHintClick}
                 onImageClick={handleImageClick}
                 onRetract={handleRetract}
+                highlightMessageId={highlightMessageId}
               />
 
               {/* 输入区域 */}
@@ -309,6 +337,7 @@ export function ChatPanel() {
                   conversations={conversations}
                   currentId={currentConversationId}
                   onSelect={handleSelectConversation}
+                  onSelectMessage={handleSelectSearchResult}
                   onDelete={handleDeleteConversation}
                   onRename={handleRenameConversation}
                   onCreateNew={handleNewConversation}

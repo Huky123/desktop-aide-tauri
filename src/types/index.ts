@@ -200,6 +200,8 @@ export interface ScreenshotAttachmentDto {
 
 /** 消息搜索结果（后端 search_messages 返回） */
 export interface SearchResult {
+  /** 匹配消息 ID（用于跳转后定位到该条） */
+  message_id: string;
   conversation_id: string;
   title: string;
   preview: string;

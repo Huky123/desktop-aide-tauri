@@ -4,6 +4,35 @@ import type { ConversationInfo, SearchResult } from "../../types";
 import { formatRelativeTime } from "../../lib/formatTime";
 import { tauriApi } from "../../services/tauriApi";
 
+/** 转义正则元字符，避免关键词被当作模式 */
+function escapeRegExp(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** 高亮 preview 中的关键词（用文本节点拆分，不走 innerHTML） */
+function highlightMatches(text: string, query: string) {
+  if (!query) return text;
+  const parts = text.split(new RegExp(`(${escapeRegExp(query)})`, "gi"));
+  const lowerQuery = query.toLowerCase();
+  return parts.map((part, index) =>
+    part.toLowerCase() === lowerQuery ? (
+      <mark
+        key={index}
+        style={{
+          background: "var(--accent)",
+          color: "#fff",
+          borderRadius: 3,
+          padding: "0 2px",
+        }}
+      >
+        {part}
+      </mark>
+    ) : (
+      part
+    ),
+  );
+}
+
 // ── ConversationItem ──
 
 interface ConversationItemProps {
@@ -134,6 +163,8 @@ interface ConversationListProps {
   conversations: ConversationInfo[];
   currentId: string;
   onSelect: (id: string) => void;
+  /** 点击搜索结果：切换到该会话并定位到指定消息 */
+  onSelectMessage: (conversationId: string, messageId: string) => void;
   onDelete: (id: string) => void;
   onRename: (id: string, newTitle: string) => void;
   onCreateNew: () => void;
@@ -145,6 +176,7 @@ export function ConversationList({
   conversations,
   currentId,
   onSelect,
+  onSelectMessage,
   onDelete,
   onRename,
   onCreateNew,
@@ -156,11 +188,15 @@ export function ConversationList({
   const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
   const [searching, setSearching] = useState(false);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 请求序号：丢弃过期请求的结果，避免先发后到的响应覆盖最新搜索
+  const searchSeqRef = useRef(0);
 
-  // 搜索：300ms 防抖
+  // 搜索：300ms 防抖 + 序号守卫（防竞态）
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    // 任何输入变化都让在途请求失效
+    const seq = ++searchSeqRef.current;
     if (!value.trim()) {
       setSearchResults(null);
       setSearching(false);
@@ -171,10 +207,12 @@ export function ConversationList({
       void tauriApi
         .searchMessages(value.trim())
         .then((results) => {
+          if (seq !== searchSeqRef.current) return; // 过期结果丢弃
           setSearchResults(results);
           setSearching(false);
         })
         .catch((err) => {
+          if (seq !== searchSeqRef.current) return;
           console.warn("[ConversationList] 搜索失败:", err);
           setSearchResults([]);
           setSearching(false);
@@ -278,33 +316,52 @@ export function ConversationList({
                   <p className="conversation-empty-text">没有匹配的消息</p>
                 </div>
               ) : (
-                searchResults.map((result) => (
-                  <button
-                    key={`${result.conversation_id}-${result.timestamp}`}
-                    className="conversation-item"
-                    onClick={() => onSelect(result.conversation_id)}
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "8px 10px",
-                    }}
-                    aria-label={`在「${result.title}」中找到：${result.preview}`}
+                <>
+                  <div
+                    className="px-2.5 pb-1 text-[10px]"
+                    style={{ color: "var(--text-quaternary)" }}
                   >
-                    <div
-                      className="text-[11px] font-medium truncate"
-                      style={{ color: "var(--text-secondary)" }}
+                    共 {searchResults.length} 条结果
+                  </div>
+                  {searchResults.map((result) => (
+                    <button
+                      key={result.message_id}
+                      className="conversation-item"
+                      onClick={() =>
+                        onSelectMessage(result.conversation_id, result.message_id)
+                      }
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        textAlign: "left",
+                        padding: "8px 10px",
+                      }}
+                      title={`${result.title} · ${formatRelativeTime(result.timestamp)}`}
+                      aria-label={`在「${result.title}」中找到：${result.preview}`}
                     >
-                      {result.title}
-                    </div>
-                    <div
-                      className="text-[11px] leading-snug mt-0.5 line-clamp-2"
-                      style={{ color: "var(--text-tertiary)" }}
-                    >
-                      {result.preview}
-                    </div>
-                  </button>
-                ))
+                      <div className="flex items-center justify-between gap-2">
+                        <span
+                          className="text-[11px] font-medium truncate"
+                          style={{ color: "var(--text-secondary)" }}
+                        >
+                          {result.title}
+                        </span>
+                        <span
+                          className="text-[10px] flex-shrink-0"
+                          style={{ color: "var(--text-quaternary)" }}
+                        >
+                          {formatRelativeTime(result.timestamp)}
+                        </span>
+                      </div>
+                      <div
+                        className="text-[11px] leading-snug mt-0.5 line-clamp-2"
+                        style={{ color: "var(--text-tertiary)" }}
+                      >
+                        {highlightMatches(result.preview, searchQuery.trim())}
+                      </div>
+                    </button>
+                  ))}
+                </>
               )
             ) : conversations.length === 0 ? (
               <div className="conversation-empty-state">

@@ -20,6 +20,8 @@ interface MessageListProps {
   onHintClick?: (action: string) => void;
   onImageClick?: (img: ImageAttachment) => void;
   onRetract?: (msgId: string) => void;
+  /** 搜索结果跳转后需要滚动定位并高亮的消息 ID */
+  highlightMessageId?: string | null;
 }
 
 /**
@@ -124,6 +126,7 @@ export function MessageList({
   onHintClick,
   onImageClick,
   onRetract,
+  highlightMessageId,
 }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -185,6 +188,20 @@ export function MessageList({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [reminderCount]);
 
+  // 搜索结果定位：滚动到匹配消息并高亮（放在自动滚底 effect 之后，确保覆盖它）
+  useEffect(() => {
+    if (!highlightMessageId) return;
+    const container = listRef.current;
+    if (!container) return;
+    const target = container.querySelector(
+      `[data-message-id="${highlightMessageId}"]`,
+    );
+    if (!target) return;
+    // 标记为用户已上滚，避免后续自动滚底把视图拉走
+    userScrolledUpRef.current = true;
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlightMessageId, messages]);
+
   const scrollToBottom = useCallback(() => {
     userScrolledUpRef.current = false;
     setShowScrollToBottom(false);
@@ -199,12 +216,26 @@ export function MessageList({
       <div className="space-y-3">
         {/* 已有消息 */}
         {messages.map((msg) => (
-          <MessageBubble
+          <div
             key={msg.id}
-            message={msg}
-            onImageClick={onImageClick}
-            onRetract={onRetract}
-          />
+            data-message-id={msg.id}
+            style={
+              msg.id === highlightMessageId
+                ? {
+                    borderRadius: 10,
+                    boxShadow: "0 0 0 2px var(--accent)",
+                    background: "rgba(129, 140, 248, 0.08)",
+                    transition: "box-shadow 0.3s ease, background 0.3s ease",
+                  }
+                : undefined
+            }
+          >
+            <MessageBubble
+              message={msg}
+              onImageClick={onImageClick}
+              onRetract={onRetract}
+            />
+          </div>
         ))}
 
         {/* 流式响应 — 由 StreamingBubble 自行订阅，避免整列表随 chunk 重渲染 */}
