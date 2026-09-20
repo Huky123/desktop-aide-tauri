@@ -22,6 +22,8 @@ interface MessageListProps {
   onRetract?: (msgId: string) => void;
   /** 搜索结果跳转后需要滚动定位并高亮的消息 ID */
   highlightMessageId?: string | null;
+  /** 当前会话 ID：切换会话时重置滚动跟随状态 */
+  sessionKey?: string;
 }
 
 /**
@@ -127,6 +129,7 @@ export function MessageList({
   onImageClick,
   onRetract,
   highlightMessageId,
+  sessionKey,
 }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -158,16 +161,35 @@ export function MessageList({
     return () => el.removeEventListener("scroll", handleScroll);
   }, [isNearBottom]);
 
-  // 新消息自动滚动到底部（仅在用户未上滚时）
+  // 切换会话时重置为「跟随底部」状态（新会话应看到最新消息）
+  // 滚到底部后由 scroll 事件自动同步"回到最新"按钮状态，无需手动 setState
   useEffect(() => {
-    // 用户上滚阅读历史时，不强制拉回底部
-    if (userScrolledUpRef.current && isAiResponding) return;
+    userScrolledUpRef.current = false;
+  }, [sessionKey]);
 
-    if (isAiResponding) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
-    } else {
-      // 新消息或 AI 开始回复时重置上滚标志并滚动到底部
+  // 新消息自动滚动到底部
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    const userJustSent = lastMessage?.role === "user";
+
+    // 用户主动发送消息：总是滚到底部（明确意图，即使此前在上滚阅读）
+    if (userJustSent) {
       userScrolledUpRef.current = false;
+      messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+      return;
+    }
+
+    // 流式输出中：用户上滚阅读历史时不打扰
+    if (isAiResponding) {
+      if (!userScrolledUpRef.current) {
+        messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+      }
+      return;
+    }
+
+    // 输出完成 / 消息变化：仅当用户本来就在底部附近时才跟随，
+    // 避免把正在上滚阅读的用户强制拉回末尾
+    if (!userScrolledUpRef.current) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, isAiResponding]);

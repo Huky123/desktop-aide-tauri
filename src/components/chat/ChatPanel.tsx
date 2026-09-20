@@ -312,6 +312,7 @@ export function ChatPanel() {
                 onImageClick={handleImageClick}
                 onRetract={handleRetract}
                 highlightMessageId={highlightMessageId}
+                sessionKey={currentConversationId}
               />
 
               {/* 输入区域 */}
